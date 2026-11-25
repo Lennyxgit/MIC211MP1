@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Implantation d’une unité de biodéchets</title>
+<title>MIC211MP1</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap">
 <style>
 /* Layout : une page de recherche, puis la carte plein écran et un panneau qui répond à « où installer, et qui appeler ». L'orange et la taille des points font ressortir les gros producteurs. */
@@ -488,7 +488,7 @@ li:first-child .t3 .r{background:var(--ink);color:var(--surface)}
 <canvas id="decor" aria-hidden="true" hidden></canvas>
 <main class="vue-page" id="accueil" hidden>
  <div class="bloc">
-  <p class="marque">France et Luxembourg</p>
+  <p class="marque">MIC211MP1 · France et Luxembourg</p>
   <h1 class="accueil-titre">Où installer une unité de traitement des biodéchets ?</h1>
   <p class="accueil-texte">Tapez une ville. En moins d'une minute, vous savez qui produit des biodéchets autour d'elle, combien, et sur quel terrain poser l'unité.</p>
   <div class="recherche" role="combobox" aria-expanded="false" aria-haspopup="listbox">
@@ -1793,7 +1793,7 @@ const COMMUNES_LU = [{"nom":"Beaufort","id":569734,"wikidata":"Q18693153"},{"nom
     }
   }
   function lancer(res, osmTard, cle) {
-    if (res.meta.ville) document.title = `Implantation d’une unité de biodéchets · ${res.meta.ville}`;
+    if (res.meta.ville) document.title = `MIC211MP1 · ${res.meta.ville}`;
     if (decor) decor.arreter();
     montrer('app');
     ouvrirCarte(res, osmTard, cle);
