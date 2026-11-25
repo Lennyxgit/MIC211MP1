@@ -312,6 +312,7 @@ h1#ville{font-size:24px;letter-spacing:-.025em}
 .big i{font-style:normal;color:var(--muted);font-size:15px}
 .big>span{font-size:12.5px}
 .big .duo{display:flex;gap:18px;flex-wrap:wrap}.big .duo>div{display:flex;align-items:baseline;gap:6px}
+.big .collvert{color:var(--ok);font-size:13px}
 .big .vert b,.v.vert,.item .t.vert{color:var(--ok)}.big .rouge b,.v.rouge,.item .t.rouge{color:var(--bad)}.v small{white-space:nowrap}
 .verdict{align-self:flex-start;padding:5px 10px;border-radius:8px;font-size:13px;font-weight:500;background:color-mix(in srgb,currentColor 10%,transparent);margin-top:4px}
 .verdict::before{display:none}
@@ -532,7 +533,7 @@ li:first-child .t3 .r{background:var(--ink);color:var(--surface)}
     <a id="recoadr" target="_blank" rel="noopener" title="Ouvrir dans Google Maps"></a>
    </section>
    <section class="hero" aria-live="polite">
-    <div class="big"><div class="duo"><div class="vert"><b id="rt">–</b><i>t/an vérifiées</i></div><div class="rouge"><b id="rt2">–</b><i>t/an à vérifier</i></div></div><span id="fourchette"></span></div>
+    <div class="big"><div class="duo"><div class="vert"><b id="rt">–</b><i>t/an vérifiées</i></div><div class="rouge"><b id="rt2">–</b><i>t/an à vérifier</i></div></div><span id="collvert" class="collvert"></span><span id="fourchette"></span></div>
     <div>
      <div class="gauge" aria-hidden="true"><div class="track"><div class="hi" id="ghi"></div><div class="lo" id="glo"></div></div><div class="tick" id="gt200"></div><div class="tick cap" id="gcap"></div></div>
      <div class="gscale" id="gscale"></div>
@@ -2113,6 +2114,7 @@ const COMMUNES_LU = [{"nom":"Beaufort","id":569734,"wikidata":"Q18693153"},{"nom
       $('rt').textContent = fmt0(c.ver);
       $('rt2').textContent = fmt0(c.mid - c.ver);
       $('fourchette').textContent = `Total ${fmt0(c.mid)} t/an · fourchette de ${fmt0(c.tmin)} à ${fmt0(c.tmax)} t/an · ${c.n} producteurs dont ${c.nver} vérifiés`;
+      $('collvert').textContent = c.coll > 0 ? `dont ${fmt0(c.coll)} t/an via la collectivité (ménages et espaces verts : accord de la commune nécessaire) et ${fmt0(c.ver - c.coll)} t/an chez les producteurs à démarcher` : '';
       const v = $('verdict');
       if (c.tmin >= H.seuil) { v.className = 'verdict ok'; v.textContent = 'Rentable'; }
       else if (c.mid >= H.seuil) { v.className = 'verdict warn'; v.textContent = 'Rentable en estimation centrale'; }
