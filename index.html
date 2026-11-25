@@ -311,6 +311,8 @@ h1#ville{font-size:24px;letter-spacing:-.025em}
 .big b{font-size:46px;letter-spacing:-.04em}
 .big i{font-style:normal;color:var(--muted);font-size:15px}
 .big>span{font-size:12.5px}
+.big .duo{display:flex;gap:18px;flex-wrap:wrap}.big .duo>div{display:flex;align-items:baseline;gap:6px}
+.big .vert b,.v.vert,.item .t.vert{color:var(--ok)}.big .rouge b,.v.rouge,.item .t.rouge{color:var(--bad)}.v small{white-space:nowrap}
 .verdict{align-self:flex-start;padding:5px 10px;border-radius:8px;font-size:13px;font-weight:500;background:color-mix(in srgb,currentColor 10%,transparent);margin-top:4px}
 .verdict::before{display:none}
 .track{height:6px;inset:4px 0 auto 0;border-radius:3px}
@@ -530,7 +532,7 @@ li:first-child .t3 .r{background:var(--ink);color:var(--surface)}
     <a id="recoadr" target="_blank" rel="noopener" title="Ouvrir dans Google Maps"></a>
    </section>
    <section class="hero" aria-live="polite">
-    <div class="big"><div><b id="rt">–</b><i>t/an</i></div><span id="fourchette"></span></div>
+    <div class="big"><div class="duo"><div class="vert"><b id="rt">–</b><i>t/an vérifiées</i></div><div class="rouge"><b id="rt2">–</b><i>t/an à vérifier</i></div></div><span id="fourchette"></span></div>
     <div>
      <div class="gauge" aria-hidden="true"><div class="track"><div class="hi" id="ghi"></div><div class="lo" id="glo"></div></div><div class="tick" id="gt200"></div><div class="tick cap" id="gcap"></div></div>
      <div class="gscale" id="gscale"></div>
@@ -2043,6 +2045,8 @@ const COMMUNES_LU = [{"nom":"Beaufort","id":569734,"wikidata":"Q18693153"},{"nom
     // ---- points
     const rayonPoint = o => { const r = o.inc ? 5.5 : Math.min(15, 2.5 + Math.sqrt(o.mid) * 1.6); return prioDe(o) === 3 ? Math.max(2.5, r * .7) : r; };
     const tonTxt = o => o.inc ? 'à demander' : `${o.fiab === 'ratio' ? '≈ ' : ''}${fmt(o.mid)} t`;
+    // Vert : taille plausible, vérifiée par un registre, une déclaration, le bâtiment, l'effectif ou la population. Rouge : taille moyenne ou inconnue, à vérifier
+    const VERIFIE = o => !o.inc && (COLLECTE(o) || ['base', 'declaree', 'batiment', 'effectif'].includes(o.fiab));
     const BASE_COURTE = {base: 'taille réelle (registre)', declaree: 'taille déclarée', batiment: 'd\'après le bâtiment, à confirmer', effectif: 'd\'après l\'effectif déclaré', ratio: 'taille moyenne, à confirmer'};
     const markers = new Map();
     function fichePopup(o) {
@@ -2093,21 +2097,22 @@ const COMMUNES_LU = [{"nom":"Beaufort","id":569734,"wikidata":"Q18693153"},{"nom
 
     // ---- calculs
     function capter(lat, lon, r, avecCollecte = null) {
-      let tmin = 0, tmax = 0, n = 0, wd = 0, mid = 0, coll = 0;
+      let tmin = 0, tmax = 0, n = 0, wd = 0, mid = 0, coll = 0, ver = 0, nver = 0;
       for (const o of DATA) {
         if (state.exclus.has(o.id)) continue;
         const inc = (avecCollecte !== null && COLLECTE(o)) ? avecCollecte : state.cats.has(o.cat);
         if (!inc) continue;
         const d = kmTo(lat, lon, o.lat, o.lon);
-        if (d <= r) { tmin += o.tmin; tmax += o.tmax; n++; wd += o.mid * d; mid += o.mid; if (COLLECTE(o)) coll += o.mid; }
+        if (d <= r) { tmin += o.tmin; tmax += o.tmax; n++; wd += o.mid * d; mid += o.mid; if (COLLECTE(o)) coll += o.mid; if (VERIFIE(o)) { ver += o.mid; nver++; } }
       }
-      return {tmin, tmax, n, mid, coll, dmoy: mid ? wd / mid : 0};
+      return {tmin, tmax, n, mid, coll, ver, nver, dmoy: mid ? wd / mid : 0};
     }
     function peindreSite() {
       cote();
       const c = capter(site.lat, site.lon, site.r);
-      $('rt').textContent = fmt0(c.mid);
-      $('fourchette').textContent = `${c.n} producteurs · de ${fmt0(c.tmin)} à ${fmt0(c.tmax)} t/an`;
+      $('rt').textContent = fmt0(c.ver);
+      $('rt2').textContent = fmt0(c.mid - c.ver);
+      $('fourchette').textContent = `Total ${fmt0(c.mid)} t/an · fourchette de ${fmt0(c.tmin)} à ${fmt0(c.tmax)} t/an · ${c.n} producteurs dont ${c.nver} vérifiés`;
       const v = $('verdict');
       if (c.tmin >= H.seuil) { v.className = 'verdict ok'; v.textContent = 'Rentable'; }
       else if (c.mid >= H.seuil) { v.className = 'verdict warn'; v.textContent = 'Rentable en estimation centrale'; }
@@ -2127,7 +2132,7 @@ const COMMUNES_LU = [{"nom":"Beaufort","id":569734,"wikidata":"Q18693153"},{"nom
     function peindreTop3(total) {
       const top = DATA.filter(o => compte(o) && o.d <= site.r && o.seg !== 'exclu' && !o.inc && o.mid > 0 && o.categorie_id !== 'C01').sort((a, b) => b.mid - a.mid).slice(0, 3);
       const part = t => total ? Math.round(t / total * 100) : 0;
-      $('top3').innerHTML = top.map((o, i) => `<li><button class="t3" data-id="${esc(o.id)}"><span class="r">${i + 1}</span><span class="n"><b>${esc(o.name)}</b><small>${esc(o.cat)} · ${BASE_COURTE[o.fiab] || ''}</small></span><span class="v">${fmt(o.mid)} t<small>${part(o.mid)} %</small></span></button></li>`).join('');
+      $('top3').innerHTML = top.map((o, i) => `<li><button class="t3" data-id="${esc(o.id)}"><span class="r">${i + 1}</span><span class="n"><b>${esc(o.name)}</b><small>${esc(o.cat)} · ${BASE_COURTE[o.fiab] || ''}</small></span><span class="v ${VERIFIE(o) ? 'vert' : 'rouge'}">${fmt(o.mid)} t<small>${VERIFIE(o) ? 'vérifié' : 'à vérifier'} · ${part(o.mid)} %</small></span></button></li>`).join('');
       const somme = top.reduce((a, o) => a + o.mid, 0), mots = ['', 'Seul', 'À eux deux', 'À eux trois'];
       $('top3n').textContent = top.length ? `${mots[top.length]} : ${fmt0(somme)} t/an, soit ${part(somme)} % du gisement du rayon${somme >= H.seuil ? ', de quoi dépasser le seuil de rentabilité' : ''}.` : 'Aucun producteur identifié dans le rayon.';
     }
@@ -2312,7 +2317,7 @@ const COMMUNES_LU = [{"nom":"Beaufort","id":569734,"wikidata":"Q18693153"},{"nom
       $('count').textContent = lieux; $('fokn').textContent = lieux;
       $('ctot').textContent = `${fmt0(current.reduce((a, o) => a + (o.mid || 0), 0))} t/an`;
       peindreFiltres();
-      $('list').innerHTML = current.length ? current.slice(0, 400).map(o => `<button class="item${o.d <= site.r ? '' : ' out'}" data-id="${esc(o.id)}"><span class="n">${esc(o.name)}</span><span class="t">${tonTxt(o)}</span></button>`).join('') + (current.length > 400 ? `<div class="empty">Les 400 premiers sont affichés. L'export Excel contient les ${current.length}.</div>` : '') : '<div class="empty">Aucun lieu ne correspond.</div>';
+      $('list').innerHTML = current.length ? current.slice(0, 400).map(o => `<button class="item${o.d <= site.r ? '' : ' out'}" data-id="${esc(o.id)}"><span class="n">${esc(o.name)}</span><span class="t ${VERIFIE(o) ? 'vert' : 'rouge'}" title="${VERIFIE(o) ? 'Taille vérifiée' : 'Taille moyenne : à vérifier'}">${tonTxt(o)}</span></button>`).join('') + (current.length > 400 ? `<div class="empty">Les 400 premiers sont affichés. L'export Excel contient les ${current.length}.</div>` : '') : '<div class="empty">Aucun lieu ne correspond.</div>';
     }
     function surligner(id) {
       document.querySelectorAll('.item.sel').forEach(e => e.classList.remove('sel'));
